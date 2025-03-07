@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "630483949399",
+    "project_id": "appmaps-aebcf",
+    "storage_bucket": "appmaps-aebcf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:630483949399:android:0f8972e57fb7e56cf81012",
+        "android_client_info": {
+          "package_name": "com.angandroid.appmapsdriver"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBaSgMUuaNMPa9jZVr2l7mL_bxn4W_kyx0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
