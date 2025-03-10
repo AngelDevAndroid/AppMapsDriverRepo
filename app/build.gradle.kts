@@ -51,8 +51,20 @@ dependencies {
     implementation (platform(libs.firebase.bom))
     implementation (libs.firebase.firestore.ktx)
 
+    // Maps
+    implementation (libs.maps.ktx)
+    implementation (libs.maps.utils.ktx)
+    implementation (libs.android.maps.utils)
+    implementation (libs.play.services.maps)
+    implementation (libs.play.services.location)
+
+    implementation (libs.easywaylocation)
+    implementation (libs.geofirestore.android)
+
     implementation(libs.firebase.auth)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    // AIzaSyAokw_qBC9AB5ZEQl5JM7f3Q-vaGsyL_wE
 }

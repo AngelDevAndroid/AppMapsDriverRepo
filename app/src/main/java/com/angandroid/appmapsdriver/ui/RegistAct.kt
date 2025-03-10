@@ -11,7 +11,8 @@ import androidx.core.view.WindowInsetsCompat
 import com.angandroid.appmapsdriver.R
 import com.angandroid.appmapsdriver.databinding.ActRegistBinding
 import com.angandroid.appmapsdriver.models.ClientModel
-import com.angandroid.appmapsdriver.utils_code.ClientProvider
+import com.angandroid.appmapsdriver.models.DriverModel
+import com.angandroid.appmapsdriver.utils_code.DriverProvider
 import com.angandroid.appmapsdriver.utils_code.FrbAuthProviders
 import com.angandroid.appmapsdriver.utils_code.ReutiliceCode
 
@@ -19,7 +20,7 @@ class RegistAct() : AppCompatActivity(), View.OnClickListener {
 
     private lateinit var bindRegister: ActRegistBinding
     private val authProvider = FrbAuthProviders()
-    private val clientProvider = ClientProvider()
+    private val driverProvider = DriverProvider()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,11 +72,12 @@ class RegistAct() : AppCompatActivity(), View.OnClickListener {
             authProvider.registerUser(etEmailReg, etPasswReg).addOnCompleteListener { it ->
                 if (it.isSuccessful) {
                     ReutiliceCode.msgToast(this, "Credenciales guardadas.", true)
-                    val nClient = ClientModel(
+                    val nDriver = DriverModel(
                         authProvider.getIdFrb(),
                         etNameReg, etNumberReg, etEmailReg, etPasswReg
                     )
-                    clientProvider.createUser(nClient).addOnCompleteListener { result ->
+
+                    driverProvider.createUser(nDriver).addOnCompleteListener { result ->
                         if (result.isSuccessful) {
                             ReutiliceCode.msgToast(this, "Usuario registrado!", true)
                         }else{

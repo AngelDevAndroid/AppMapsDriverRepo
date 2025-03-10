@@ -4,4 +4,8 @@
     <color name="white">#FFFFFFFF</color>
 
     <color name="black_deg">#FF000000</color>
+    <color name="clr_green">#75A060</color>
+    <color name="clr_yellow">#A0A09C</color>
+
+
 </resources>

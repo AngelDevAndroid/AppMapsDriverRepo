@@ -145,7 +145,6 @@
                 android:background="@color/white"
                 android:alpha="0.3"/>
 
-
         </LinearLayout>
 
         <Button

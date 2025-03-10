@@ -64,7 +64,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 if (aResult.isSuccessful) {
                     Log.d("LG_LOGIN", "${aResult.result}")
                     ReutiliceCode.msgToast(this, "Credenciales correctas. ${aResult.result}", true)
-                    navIntent(MapsDriverct::class.java)
+                    navIntent(MapsDriver::class.java)
                 }else{
                     Log.d("LG_LOGIN", "${aResult.result}")
                     ReutiliceCode.msgToast(this, "Credenciales invalidas. ${aResult.result}", true)

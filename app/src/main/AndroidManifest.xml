@@ -2,6 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -13,7 +19,7 @@
         android:theme="@style/Theme.AppMapsDriver"
         tools:targetApi="31">
         <activity
-            android:name=".ui.MapsDriverct"
+            android:name=".ui.MapsDriver"
             android:exported="false" />
         <activity
             android:name=".ui.MainActivity"
@@ -27,6 +33,11 @@
         <activity
             android:name=".ui.RegistAct"
             android:exported="false" />
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyA6ScJRrfWhObATIY0KmGwE_V3KxGoBLWE"/>
+
     </application>
 
 </manifest>
