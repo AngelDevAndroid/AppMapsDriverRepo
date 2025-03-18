@@ -26,7 +26,7 @@
         android:layout_marginStart="20dp"
         android:layout_marginEnd="20dp"
         android:layout_marginBottom="20dp"
-       app:layout_constraintBottom_toTopOf="@+id/btn_disconn_loc"
+        app:layout_constraintBottom_toTopOf="@+id/btn_disconn_loc"
         app:layout_constraintStart_toStartOf="parent" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton

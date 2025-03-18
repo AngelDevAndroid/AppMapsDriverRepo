@@ -141,7 +141,6 @@ class MapsDriver : AppCompatActivity(), OnMapReadyCallback, Listener, View.OnCli
                     permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false) -> {
                         checkIfDriverIsConnected()
                         Log.d("TAG_PERMS", "Permiso aceptado")
-                        //ewlLocation?.startLocation()
                     }
                     permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false) -> {
                         Log.d("TAG_PERMS", "Permiso aceptado con limitaciòn")
