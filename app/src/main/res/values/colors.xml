@@ -7,5 +7,8 @@
     <color name="clr_green">#75A060</color>
     <color name="clr_yellow">#A0A09C</color>
 
+    <color name="clr_red_cancel">#CC5261</color>
 
+    <color name="clr_cancel">#FFC107</color>
+    <color name="green_route">#4CAF50</color>
 </resources>

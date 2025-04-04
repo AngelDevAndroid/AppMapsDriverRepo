@@ -15,12 +15,20 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.createBitmap
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.angandroid.appmapsdriver.R
-import com.angandroid.appmapsdriver.databinding.ActMapsDriverBinding
+import com.angandroid.appmapsdriver.databinding.ActTripAcceptBinding
+import com.angandroid.appmapsdriver.models.Booking
+import com.angandroid.appmapsdriver.utils_code.BookingProvider
+import com.angandroid.appmapsdriver.utils_code.FrbAuthProviders
+import com.angandroid.appmapsdriver.utils_code.GeoProvider
+import com.angandroid.appmapsdriver.utils_code.ReutiliceCode
 import com.example.easywaylocation.EasyWayLocation
 import com.example.easywaylocation.Listener
+import com.example.easywaylocation.draw_path.DirectionUtil
+import com.example.easywaylocation.draw_path.PolyLineDataBean
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -30,27 +38,28 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
-import androidx.core.graphics.createBitmap
-import com.angandroid.appmapsdriver.models.Booking
-import com.angandroid.appmapsdriver.ui.fragments.FmtRequestTripInf
-import com.angandroid.appmapsdriver.utils_code.BookingProvider
-import com.angandroid.appmapsdriver.utils_code.FrbAuthProviders
-import com.angandroid.appmapsdriver.utils_code.GeoProvider
 import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.ListenerRegistration
 
-class MapsDriver : AppCompatActivity(), OnMapReadyCallback, Listener, View.OnClickListener {
+class TripAcceptAct :  AppCompatActivity(),
+                       OnMapReadyCallback,
+                       Listener,
+                       View.OnClickListener,
+                       DirectionUtil.DirectionCallBack {
+
+    private var destinationLatLng: LatLng? = null
 
     // View
-    private lateinit var bindMapsDriver: ActMapsDriverBinding
-    private val modalBooking = FmtRequestTripInf()
+    private lateinit var bindMapsAccept: ActTripAcceptBinding
+    //private val modalBooking = FmtRequestTripInf()
 
     // Objects
     private var gMap: GoogleMap? = null
     lateinit var ewlLocation: EasyWayLocation
-    private var setCoordLocation: com.google.android.gms.maps.model.LatLng? = null
+    private var myLocCoordinates: com.google.android.gms.maps.model.LatLng? = null
     private var markerDriver: Marker? = null
     private var geoProvider = GeoProvider()
     private val authProvider = FrbAuthProviders()
@@ -61,10 +70,17 @@ class MapsDriver : AppCompatActivity(), OnMapReadyCallback, Listener, View.OnCli
     private lateinit var timer: CountDownTimer
 
     // Vars
+    private var wayPoints: ArrayList<LatLng> = ArrayList()
+    private val WAY_POINT_TAG = "way_point_tag"
+    private lateinit var directionUtil: DirectionUtil
+
+    private var markerOrigin: Marker? = null
+    private var markerDestinate: Marker? = null
 
     //private lateinit var currentLocation: Location
     //private lateinit var flProviderLocation: FusedLocationProviderClient
     private val permissionCode = 101
+    private var drawRoute = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,12 +88,12 @@ class MapsDriver : AppCompatActivity(), OnMapReadyCallback, Listener, View.OnCli
         FirebaseApp.initializeApp(this)
 
         enableEdgeToEdge()
-        bindMapsDriver = ActMapsDriverBinding.inflate(layoutInflater)
-        setContentView(bindMapsDriver.root)
+        bindMapsAccept = ActTripAcceptBinding.inflate(layoutInflater)
+        setContentView(bindMapsAccept.root)
 
         initObjects()
 
-        val mapFragment = supportFragmentManager.findFragmentById(R.id.fmt_map) as SupportMapFragment
+        val mapFragment = supportFragmentManager.findFragmentById(R.id.fmt_cont_trip_accept) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
         val locRequest = LocationRequest.create().apply {
@@ -97,21 +113,25 @@ class MapsDriver : AppCompatActivity(), OnMapReadyCallback, Listener, View.OnCli
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-        listenerBooking()
+
         counterModalDialog()
     }
 
     private fun initObjects() {
-        bindMapsDriver.btnConnLoc.setOnClickListener(this)
-        bindMapsDriver.btnDisconnLoc.setOnClickListener(this)
+        bindMapsAccept.btnStart.setOnClickListener(this)
+        bindMapsAccept.btnFinish.setOnClickListener(this)
+    }
+
+    override fun onStart() {
+        super.onStart()
     }
 
     override fun onClick(v: View?) {
         when(v?.id) {
-            R.id.btn_conn_loc -> {
+            R.id.btn_start -> {
                 connectDriver()
             }
-            R.id.btn_disconn_loc -> {
+            R.id.btn_finish -> {
                 disconnectDriver()
             }
         }
@@ -123,6 +143,57 @@ class MapsDriver : AppCompatActivity(), OnMapReadyCallback, Listener, View.OnCli
         gMap = map
         gMap?.uiSettings?.isZoomControlsEnabled = true
         gMap?.isMyLocationEnabled = false
+
+        //addDestinationMarker()
+    }
+
+    private fun addOriginMarker(originLatLngX: LatLng) {
+        markerOrigin = gMap?.addMarker(MarkerOptions()
+            .position(originLatLngX)
+            .title("Conductor")
+            .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_uber_car)))
+    }
+
+    private fun addDestinationMarker(destinationLatLng: LatLng) {
+        markerDestinate = gMap?.addMarker(MarkerOptions()
+            .position(destinationLatLng)
+            .title("Ir aquì")
+            .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_uber_car)))
+    }
+
+    private fun getBooking() {
+        bookProvider.getBooking().get().addOnSuccessListener { query ->
+            if (query != null) {
+                if (query.size() > 0) {
+                    val booking = query.documents[0].toObject(Booking::class.java)
+                    val originLatLng = LatLng(booking?.originLat?: 0.0, booking?.originLng?: 0.0)
+                    Log.d("TAG_CRD", "${originLatLng.latitude}")
+                    easyDrawRoute(originLatLng)
+                    addOriginMarker(originLatLng)
+                }
+            }
+        }
+    }
+
+    private fun easyDrawRoute(position: LatLng) {
+
+        val ifIsNull = LatLng(0.0, 0.0)
+
+        wayPoints.add(myLocCoordinates?: ifIsNull)
+        wayPoints.add(position)
+        directionUtil = DirectionUtil.Builder()
+            .setDirectionKey(resources.getString(R.string.google_maps_key))
+            .setOrigin(myLocCoordinates?: ifIsNull)
+            .setWayPoints(wayPoints)
+            .setGoogleMap(gMap!!)
+            .setPolyLinePrimaryColor(R.color.green_route)
+            .setPolyLineWidth(10)
+            .setPathAnimation(true)
+            .setCallback(this)
+            .setDestination(position)
+            .build()
+
+        directionUtil.initPath()
     }
 
     override fun onRequestPermissionsResult(
@@ -134,9 +205,9 @@ class MapsDriver : AppCompatActivity(), OnMapReadyCallback, Listener, View.OnCli
         super.onRequestPermissionsResult(requestCode, permissions, grantResults, deviceId)
 
         when(requestCode){
-             permissionCode -> if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            permissionCode -> if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
-             }
+            }
         }
     }
 
@@ -145,10 +216,11 @@ class MapsDriver : AppCompatActivity(), OnMapReadyCallback, Listener, View.OnCli
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N){
                 when {
                     permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false) -> {
-                        checkIfDriverIsConnected()
+                        ewlLocation.startLocation()
                         Log.d("TAG_PERMS", "Permiso aceptado")
                     }
                     permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false) -> {
+                        ewlLocation.startLocation()
                         Log.d("TAG_PERMS", "Permiso aceptado con limitaciòn")
                     }
                     else -> {
@@ -156,21 +228,28 @@ class MapsDriver : AppCompatActivity(), OnMapReadyCallback, Listener, View.OnCli
                     }
                 }
             }
-    }
+        }
 
     override fun locationOn() {
         TODO("Not yet implemented")
     }
 
     override fun currentLocation(location: Location) {
-        setCoordLocation =
+        myLocCoordinates =
             com.google.android.gms.maps.model.LatLng(location.latitude, location.longitude)
         gMap?.moveCamera(
             CameraUpdateFactory
-                .newCameraPosition(CameraPosition.builder().target(setCoordLocation!!).zoom(17f).build()))
+                .newCameraPosition(CameraPosition.builder().target(myLocCoordinates!!).zoom(17f).build()))
 
         addMarker()
         saveLocation()
+
+        if (!drawRoute) {
+            drawRoute = true
+            getBooking()
+        }else{
+            ReutiliceCode.msgToast(this, "Ubicaciòn no disponible, revisa GPS!", true)
+        }
     }
 
     private fun addMarker() {
@@ -181,13 +260,14 @@ class MapsDriver : AppCompatActivity(), OnMapReadyCallback, Listener, View.OnCli
             markerDriver!!.remove()
         }
 
-        if (setCoordLocation != null){
+        if (myLocCoordinates != null){
             markerDriver = gMap?.addMarker(
                 MarkerOptions()
-                    .position(setCoordLocation!!)
-                    .anchor(0.5f, 0.5f)
-                    .flat(true)
-                    .icon(markerIcon)
+                    .position(myLocCoordinates!!)
+                    //.anchor(0.5f, 0.5f)
+                    //.flat(true)
+                    .title("Recoger aqui")
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.icons_location_person))
             )
         }
     }
@@ -213,15 +293,15 @@ class MapsDriver : AppCompatActivity(), OnMapReadyCallback, Listener, View.OnCli
     }
 
     private fun saveLocation() {
-        if (setCoordLocation != null) {
-            geoProvider.saveLocation(authProvider.getIdFrb(), setCoordLocation!!)
+        if (myLocCoordinates != null) {
+            geoProvider.saveLocationWorking(authProvider.getIdFrb(), myLocCoordinates!!)
         }
     }
 
     private fun checkIfDriverIsConnected() {
         geoProvider.getLocIsConnected(authProvider.getIdFrb()).addOnSuccessListener { document ->
             if (document.exists() && document.contains("g")) {
-                 connectDriver()
+                connectDriver()
             }else{
                 disconnectDriver()
             }
@@ -230,7 +310,7 @@ class MapsDriver : AppCompatActivity(), OnMapReadyCallback, Listener, View.OnCli
 
     private fun disconnectDriver() {
         ewlLocation?.endUpdates()
-        if (setCoordLocation != null) {
+        if (myLocCoordinates != null) {
             //geoProvider.removeLocationOnly(authProvider.getIdFrb())
             geoProvider.delCollLocationAllTree(authProvider.getIdFrb())
             //showBtnConnect()
@@ -244,38 +324,6 @@ class MapsDriver : AppCompatActivity(), OnMapReadyCallback, Listener, View.OnCli
         //showBtnDisconnect()
     }
 
-    // Get info trip request
-    private fun listenerBooking() {
-        listenBook = bookProvider.getBooking().addSnapshotListener { snapsh, error ->
-
-            if (error?.message != null) {
-                Log.d("LG_LISTEN", "${error.message}")
-                return@addSnapshotListener
-            }
-
-            if (snapsh != null) {
-                if (snapsh.documents.size > 0) {
-
-                    val booking = snapsh.documents[0].toObject(Booking::class.java)
-                    if (booking?.status.equals("create")){
-                        showModalBooking(booking)
-                        Log.d("LG_LISTEN", "${booking?.destination}")
-                    }
-                }else{
-                    Log.d("LG_LISTEN", "-----> ${authProvider.getIdFrb()}")
-                }
-            }
-        }
-    }
-
-    private fun showModalBooking(booking: Booking?) {
-        val bundle = Bundle()
-        bundle.putParcelable("object_booking", booking)
-        modalBooking.arguments = bundle
-        modalBooking.show(supportFragmentManager, FmtRequestTripInf.TAG)
-        timer.start()
-        Log.d("LG_LISTEN", "IN")
-    }
 
     // Timer to hide bsd
     private fun counterModalDialog() {
@@ -285,20 +333,10 @@ class MapsDriver : AppCompatActivity(), OnMapReadyCallback, Listener, View.OnCli
             }
 
             override fun onFinish() {
-                modalBooking.dismiss()
+                //modalBooking.dismiss()
                 Log.d("TAG_COUNTER", "onFinish ->")
             }
         }
-    }
-
-    private fun showBtnConnect() {
-        bindMapsDriver.btnDisconnLoc.visibility = View.GONE
-        bindMapsDriver.btnConnLoc.visibility = View.VISIBLE
-    }
-
-    private fun showBtnDisconnect() {
-        bindMapsDriver.btnConnLoc.visibility = View.VISIBLE
-        bindMapsDriver.btnDisconnLoc.visibility = View.GONE
     }
 
     override fun onPause() {
@@ -311,5 +349,12 @@ class MapsDriver : AppCompatActivity(), OnMapReadyCallback, Listener, View.OnCli
         ewlLocation?.endUpdates()
         listenBook?.remove()
         //geoProvider.removeLocationOnly(authProvider.getIdFrb())
+    }
+
+    override fun pathFindFinish(
+        polyLineDetailsMap: HashMap<String, PolyLineDataBean>,
+        polyLineDetailsArray: ArrayList<PolyLineDataBean>
+    ) {
+        directionUtil.drawPath(WAY_POINT_TAG)
     }
 }

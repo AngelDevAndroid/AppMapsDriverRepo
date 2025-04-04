@@ -1,5 +1,5 @@
 [versions]
-agp = "8.9.0"
+agp = "8.9.1"
 androidMapsUtils = "2.2.3"
 easywaylocation = "2.4"
 firebaseBom = "30.5.0"

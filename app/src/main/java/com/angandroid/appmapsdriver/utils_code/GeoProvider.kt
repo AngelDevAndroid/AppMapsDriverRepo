@@ -15,9 +15,14 @@ class GeoProvider {
     val delGeoFirestore = GeoFirestore(delCollection)
 
     val geoFirestore = GeoFirestore(FirebaseFirestore.getInstance().collection("Locations"))
+    val geoFaiCollectionWorking = GeoFirestore(FirebaseFirestore.getInstance().collection("LocationsWorking"))
 
     fun saveLocation(idDriver: String, position: LatLng) {
         geoFirestore.setLocation(idDriver, GeoPoint(position.latitude, position.longitude))
+    }
+
+    fun saveLocationWorking(idDriver: String, position: LatLng) {
+        geoFaiCollectionWorking.setLocation(idDriver, GeoPoint(position.latitude, position.longitude))
     }
 
     fun removeLocationOnly(idDriver: String) {
@@ -25,7 +30,7 @@ class GeoProvider {
     }
 
     fun delCollLocationAllTree(idDriver: String) {
-         delCollection.document(idDriver).delete()
+        delCollection.document(idDriver).delete()
     }
 
     fun getLocIsConnected(idDriver: String): Task<DocumentSnapshot> {
