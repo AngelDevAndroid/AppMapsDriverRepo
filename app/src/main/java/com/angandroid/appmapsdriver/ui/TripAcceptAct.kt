@@ -1,6 +1,7 @@
 package com.angandroid.appmapsdriver.ui
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Canvas
 import android.graphics.drawable.Drawable
@@ -50,8 +51,6 @@ class TripAcceptAct :  AppCompatActivity(),
                        View.OnClickListener,
                        DirectionUtil.DirectionCallBack {
 
-    private var destinationLatLng: LatLng? = null
-
     // View
     private lateinit var bindMapsAccept: ActTripAcceptBinding
     //private val modalBooking = FmtRequestTripInf()
@@ -74,13 +73,21 @@ class TripAcceptAct :  AppCompatActivity(),
     private val WAY_POINT_TAG = "way_point_tag"
     private lateinit var directionUtil: DirectionUtil
 
-    private var markerOrigin: Marker? = null
-    private var markerDestinate: Marker? = null
+    private var markerOriginClient: Marker? = null
+    private var markerDestinateClient: Marker? = null
 
     //private lateinit var currentLocation: Location
     //private lateinit var flProviderLocation: FusedLocationProviderClient
     private val permissionCode = 101
     private var drawRoute = false
+
+    private var booking: Booking? = null
+    private var originClientLatLng: LatLng? = null
+    private var destinClientLatLng: LatLng? = null
+
+    var isCloseToOrigin = false
+
+    val ifIsNull = LatLng(0.0, 0.0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -129,14 +136,13 @@ class TripAcceptAct :  AppCompatActivity(),
     override fun onClick(v: View?) {
         when(v?.id) {
             R.id.btn_start -> {
-                connectDriver()
+                updateStatusToStared()
             }
             R.id.btn_finish -> {
-                disconnectDriver()
+                updateStatusToFinished()
             }
         }
     }
-
 
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     override fun onMapReady(map: GoogleMap) {
@@ -147,29 +153,55 @@ class TripAcceptAct :  AppCompatActivity(),
         //addDestinationMarker()
     }
 
-    private fun addOriginMarker(originLatLngX: LatLng) {
-        markerOrigin = gMap?.addMarker(MarkerOptions()
+    private fun addOriginMarkerClient(originLatLngX: LatLng) {
+        markerOriginClient = gMap?.addMarker(MarkerOptions()
             .position(originLatLngX)
-            .title("Conductor")
-            .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_uber_car)))
+            .title("Cliente")
+            .icon(BitmapDescriptorFactory.fromResource(R.drawable.icons_location_person)))
+    }
+
+    private fun addMarkerDestinClient() {
+        markerDestinateClient = gMap?.addMarker(MarkerOptions()
+            .position(destinClientLatLng?: ifIsNull)
+            .title("Llevar aquì, al cliente")
+            .icon(BitmapDescriptorFactory.fromResource(R.drawable.icon_taxi)))
     }
 
     private fun addDestinationMarker(destinationLatLng: LatLng) {
-        markerDestinate = gMap?.addMarker(MarkerOptions()
+        markerDestinateClient = gMap?.addMarker(MarkerOptions()
             .position(destinationLatLng)
             .title("Ir aquì")
             .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_uber_car)))
     }
 
+    // Get distance between driver and client
+    private fun getDistanceDriverClient(originLatLng: LatLng, destinLatLng: LatLng): Float {
+
+        var distance = 0.0f
+        val originLocation = Location("")
+        val destinationLocation = Location("")
+
+        originLocation.latitude = originLatLng.latitude
+        originLocation.longitude  = originLatLng.longitude
+
+        destinationLocation.latitude = destinLatLng.latitude
+        destinationLocation.longitude  = destinLatLng.longitude
+
+        distance = originLocation.distanceTo(destinationLocation)
+        return distance
+    }
+
+    // Draw route and add marker client
     private fun getBooking() {
         bookProvider.getBooking().get().addOnSuccessListener { query ->
             if (query != null) {
                 if (query.size() > 0) {
-                    val booking = query.documents[0].toObject(Booking::class.java)
-                    val originLatLng = LatLng(booking?.originLat?: 0.0, booking?.originLng?: 0.0)
-                    Log.d("TAG_CRD", "${originLatLng.latitude}")
-                    easyDrawRoute(originLatLng)
-                    addOriginMarker(originLatLng)
+                    booking = query.documents[0].toObject(Booking::class.java)
+                    originClientLatLng = LatLng(booking?.originLat?: 0.0,booking?.originLng?: 0.0)
+                    destinClientLatLng = LatLng(booking?.destinationLat?: 0.0,booking?.destinationLng?: 0.0)
+                    Log.d("TAG_CRD", "${originClientLatLng?.latitude}")
+                    easyDrawRoute(originClientLatLng?: ifIsNull)
+                    addOriginMarkerClient(originClientLatLng?: ifIsNull)
                 }
             }
         }
@@ -241,18 +273,21 @@ class TripAcceptAct :  AppCompatActivity(),
             CameraUpdateFactory
                 .newCameraPosition(CameraPosition.builder().target(myLocCoordinates!!).zoom(17f).build()))
 
-        addMarker()
+        addMarkerMyLocDriver()
         saveLocation()
+
+        calculateDistance(booking, originClientLatLng)
 
         if (!drawRoute) {
             drawRoute = true
             getBooking()
+            //calculateDistance(booking, originClientLatLng)
         }else{
             ReutiliceCode.msgToast(this, "Ubicaciòn no disponible, revisa GPS!", true)
         }
     }
 
-    private fun addMarker() {
+    private fun addMarkerMyLocDriver() {
         val drawable = ContextCompat.getDrawable(this, R.drawable.ic_uber_car)
         val markerIcon = getMarkerFromDrawable(drawable!!)
 
@@ -266,9 +301,48 @@ class TripAcceptAct :  AppCompatActivity(),
                     .position(myLocCoordinates!!)
                     //.anchor(0.5f, 0.5f)
                     //.flat(true)
-                    .title("Recoger aqui")
-                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.icons_location_person))
+                    .title("Conductor disponible")
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_uber_car))
             )
+        }
+    }
+
+    // Calculate distance
+    private fun calculateDistance(book: Booking?, originClient: LatLng?) {
+
+        if (book != null && originClient != null) {
+            val distance =
+                getDistanceDriverClient(myLocCoordinates?: LatLng(0.0, 0.0), originClient)
+            if (distance <= 300) {
+                isCloseToOrigin = true
+            }
+        }
+    }
+
+    private fun updateStatusToStared() {
+        if (isCloseToOrigin) {
+            bookProvider.updateStatus(booking?.idClient?: "", "started").addOnCompleteListener { result ->
+                if (result.isSuccessful) {
+                    //gMap?.clear()
+                    easyDrawRoute(destinClientLatLng?: LatLng(0.0, 0.0))
+                    markerOriginClient?.remove()
+                    addMarkerDestinClient()
+                    ReutiliceCode.msgToast(this, "Iniciando viaje!", true)
+                }
+            }
+        }else{
+            ReutiliceCode.msgToast(this, "Debes estar màs cerca a la ubicaciòn del cliente!", true)
+        }
+    }
+
+    private fun updateStatusToFinished() {
+        bookProvider.updateStatus(booking?.idClient?: "", "finished").addOnCompleteListener { result ->
+            if (result.isSuccessful) {
+                val intent = Intent(this, MapsDriver::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent)
+                ReutiliceCode.msgToast(this, "Viaje finalizado!", true)
+            }
         }
     }
 
@@ -280,7 +354,6 @@ class TripAcceptAct :  AppCompatActivity(),
         drawable.setBounds(0,0,100,100)
         drawable.draw(canvas)
         return BitmapDescriptorFactory.fromBitmap(bitmap)
-
     }
 
     override fun locationCancelled() {
@@ -309,7 +382,7 @@ class TripAcceptAct :  AppCompatActivity(),
     }
 
     private fun disconnectDriver() {
-        ewlLocation?.endUpdates()
+        ewlLocation.endUpdates()
         if (myLocCoordinates != null) {
             //geoProvider.removeLocationOnly(authProvider.getIdFrb())
             geoProvider.delCollLocationAllTree(authProvider.getIdFrb())
@@ -319,11 +392,10 @@ class TripAcceptAct :  AppCompatActivity(),
 
     // Connect loc current handly
     private fun connectDriver() {
-        ewlLocation?.endUpdates()
-        ewlLocation?.startLocation()
+        ewlLocation.endUpdates()
+        ewlLocation.startLocation()
         //showBtnDisconnect()
     }
-
 
     // Timer to hide bsd
     private fun counterModalDialog() {
@@ -341,12 +413,12 @@ class TripAcceptAct :  AppCompatActivity(),
 
     override fun onPause() {
         super.onPause()
-        ewlLocation?.endUpdates()
+        ewlLocation.endUpdates()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        ewlLocation?.endUpdates()
+        ewlLocation.endUpdates()
         listenBook?.remove()
         //geoProvider.removeLocationOnly(authProvider.getIdFrb())
     }
