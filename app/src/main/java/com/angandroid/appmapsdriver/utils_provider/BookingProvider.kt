@@ -1,9 +1,8 @@
-package com.angandroid.appmapsdriver.utils_code
+package com.angandroid.appmapsdriver.utils_provider
 
 import android.util.Log
 import com.angandroid.appmapsdriver.models.Booking
 import com.google.android.gms.tasks.Task
-import com.google.api.AuthProvider
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase

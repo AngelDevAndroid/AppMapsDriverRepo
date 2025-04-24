@@ -1,4 +1,4 @@
-package com.angandroid.appmapsdriver.utils_code
+package com.angandroid.appmapsdriver.utils_codes
 
 import android.content.Context
 import android.widget.Toast

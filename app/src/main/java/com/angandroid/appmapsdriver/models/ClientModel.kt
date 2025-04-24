@@ -6,5 +6,6 @@ data class ClientModel(
     val nameUser: String? = null,
     val numUser: String? = null,
     val emailUser: String? = null,
-    val passwUser: String? = null
+    val passwUser: String? = null,
+    val imgUser: String? = null
 )

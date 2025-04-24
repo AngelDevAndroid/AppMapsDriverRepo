@@ -5,13 +5,33 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.MapsDriver">
+    tools:context=".ui.activities.MapsDriver">
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fmt_map"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:name="com.google.android.gms.maps.SupportMapFragment" />
+
+    <View
+        android:id="@+id/view_rounded"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:alpha="0.7"
+        android:background="@drawable/rounded_layout"
+        app:layout_constraintBottom_toBottomOf="@+id/tb_map"
+        app:layout_constraintEnd_toEndOf="@+id/tb_map"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/fmt_map" />
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/tb_map"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@android:color/transparent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:title=""
+        android:titleTextColor="@android:color/transparent" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btn_conn_loc"

@@ -11,4 +11,6 @@
 
     <color name="clr_cancel">#FFC107</color>
     <color name="green_route">#4CAF50</color>
+
+    <color name="clr_gray_rating">#646464</color>
 </resources>

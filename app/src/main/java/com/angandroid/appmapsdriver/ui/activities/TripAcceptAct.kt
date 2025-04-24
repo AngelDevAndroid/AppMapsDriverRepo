@@ -1,4 +1,4 @@
-package com.angandroid.appmapsdriver.ui
+package com.angandroid.appmapsdriver.ui.activities
 
 import android.Manifest
 import android.content.Intent
@@ -9,6 +9,8 @@ import android.location.Location
 import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.View
 import androidx.activity.enableEdgeToEdge
@@ -22,10 +24,14 @@ import androidx.core.view.WindowInsetsCompat
 import com.angandroid.appmapsdriver.R
 import com.angandroid.appmapsdriver.databinding.ActTripAcceptBinding
 import com.angandroid.appmapsdriver.models.Booking
-import com.angandroid.appmapsdriver.utils_code.BookingProvider
-import com.angandroid.appmapsdriver.utils_code.FrbAuthProviders
-import com.angandroid.appmapsdriver.utils_code.GeoProvider
-import com.angandroid.appmapsdriver.utils_code.ReutiliceCode
+import com.angandroid.appmapsdriver.models.HistoryTripModel
+import com.angandroid.appmapsdriver.models.Prices
+import com.angandroid.appmapsdriver.utils_provider.BookingProvider
+import com.angandroid.appmapsdriver.utils_provider.ConfigProvider
+import com.angandroid.appmapsdriver.utils_provider.FrbAuthProviders
+import com.angandroid.appmapsdriver.utils_provider.GeoProvider
+import com.angandroid.appmapsdriver.utils_provider.HistoryProvider
+import com.angandroid.appmapsdriver.utils_codes.ReutiliceCode
 import com.example.easywaylocation.EasyWayLocation
 import com.example.easywaylocation.Listener
 import com.example.easywaylocation.draw_path.DirectionUtil
@@ -44,6 +50,9 @@ import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.ListenerRegistration
+import java.text.DecimalFormat
+import java.util.Date
+import java.util.UUID
 
 class TripAcceptAct :  AppCompatActivity(),
                        OnMapReadyCallback,
@@ -63,6 +72,7 @@ class TripAcceptAct :  AppCompatActivity(),
     private var geoProvider = GeoProvider()
     private val authProvider = FrbAuthProviders()
     private val bookProvider = BookingProvider()
+    private val historyProvider = HistoryProvider()
 
     private var listenBook: ListenerRegistration? = null
 
@@ -86,8 +96,26 @@ class TripAcceptAct :  AppCompatActivity(),
     private var destinClientLatLng: LatLng? = null
 
     var isCloseToOrigin = false
+    var clearRoute = false
 
     val ifIsNull = LatLng(0.0, 0.0)
+
+    // Temporizador trip----->
+    private var counter = 0
+    private var minutes = 0
+
+    val handler = Handler(Looper.getMainLooper())
+    private var runnable: Runnable? = null
+
+    // Distance trip----->
+    private var meters = 0.0
+    private var km = 0.0
+    private var currentLocation = Location("")
+    private var previusLocation = Location("")
+
+    var isStartTrip = false
+    private var confProvider = ConfigProvider()
+    private var totalPriceTrip: Double? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -131,6 +159,7 @@ class TripAcceptAct :  AppCompatActivity(),
 
     override fun onStart() {
         super.onStart()
+        setCounterTime()
     }
 
     override fun onClick(v: View?) {
@@ -200,6 +229,7 @@ class TripAcceptAct :  AppCompatActivity(),
                     originClientLatLng = LatLng(booking?.originLat?: 0.0,booking?.originLng?: 0.0)
                     destinClientLatLng = LatLng(booking?.destinationLat?: 0.0,booking?.destinationLng?: 0.0)
                     Log.d("TAG_CRD", "${originClientLatLng?.latitude}")
+
                     easyDrawRoute(originClientLatLng?: ifIsNull)
                     addOriginMarkerClient(originClientLatLng?: ifIsNull)
                 }
@@ -269,6 +299,20 @@ class TripAcceptAct :  AppCompatActivity(),
     override fun currentLocation(location: Location) {
         myLocCoordinates =
             com.google.android.gms.maps.model.LatLng(location.latitude, location.longitude)
+
+        currentLocation = location
+
+        if (isStartTrip) {
+            meters = meters + previusLocation.distanceTo(currentLocation)
+            km = meters / 1000
+
+            val df = DecimalFormat("#.00")
+            val formatted = df.format(km)
+            bindMapsAccept.tvDistance.text = formatted.plus("Km")
+        }
+
+        previusLocation = location
+
         gMap?.moveCamera(
             CameraUpdateFactory
                 .newCameraPosition(CameraPosition.builder().target(myLocCoordinates!!).zoom(17f).build()))
@@ -323,10 +367,12 @@ class TripAcceptAct :  AppCompatActivity(),
         if (isCloseToOrigin) {
             bookProvider.updateStatus(booking?.idClient?: "", "started").addOnCompleteListener { result ->
                 if (result.isSuccessful) {
-                    //gMap?.clear()
-                    easyDrawRoute(destinClientLatLng?: LatLng(0.0, 0.0))
+                    isStartTrip = true
                     markerOriginClient?.remove()
                     addMarkerDestinClient()
+                    easyDrawRoute(destinClientLatLng?: LatLng(0.0, 0.0))
+
+                    runnable?.let { handler.postDelayed(it, 1000) }
                     ReutiliceCode.msgToast(this, "Iniciando viaje!", true)
                 }
             }
@@ -336,14 +382,15 @@ class TripAcceptAct :  AppCompatActivity(),
     }
 
     private fun updateStatusToFinished() {
-        bookProvider.updateStatus(booking?.idClient?: "", "finished").addOnCompleteListener { result ->
-            if (result.isSuccessful) {
-                val intent = Intent(this, MapsDriver::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                startActivity(intent)
-                ReutiliceCode.msgToast(this, "Viaje finalizado!", true)
-            }
+
+        runnable?.let { handler.removeCallbacks(it) }
+        ewlLocation.endUpdates()
+        geoProvider.delCollWorking(authProvider.getIdFrb())
+
+        if (minutes == 0) {
+            minutes = 1
         }
+        getPrices(km, minutes.toDouble())
     }
 
     private fun getMarkerFromDrawable(drawable: Drawable): BitmapDescriptor {
@@ -362,7 +409,7 @@ class TripAcceptAct :  AppCompatActivity(),
 
     override fun onResume() {
         super.onResume()
-        //ewlLocation?.startLocation()
+        ewlLocation.startLocation()
     }
 
     private fun saveLocation() {
@@ -411,6 +458,86 @@ class TripAcceptAct :  AppCompatActivity(),
         }
     }
 
+    private fun setCounterTime() {
+
+        runnable = Runnable {
+            counter +=1
+
+            if (minutes == 0) {
+                bindMapsAccept.tvTime.text = "$counter , seg"
+            }else{
+                bindMapsAccept.tvTime.text = "$minutes min $counter , seg"
+            }
+
+            if (counter == 60) {
+                minutes = minutes + (counter / 60)
+                counter = 0
+
+                bindMapsAccept.tvTime.text = "$minutes min $counter , seg"
+            }
+            runnable?.let { handler.postDelayed(it, 1000) }
+        }
+    }
+
+    // Get price of trip
+    private fun getPrices(distance: Double, time: Double) {
+        confProvider.getPrices().addOnSuccessListener { doc ->
+            if (doc.exists()) {
+                val prices = doc.toObject(Prices::class.java)?: Prices()
+
+                val totalDistance = (distance * prices.km!!) ?: 0.0
+                val totalTime = (time * prices.min!!)?: 0.0
+
+                totalPriceTrip = totalDistance + totalTime
+                totalPriceTrip = if ((totalPriceTrip ?: 0.0) < 5.74) prices.minValue?: 0.0 else totalPriceTrip
+
+                createHistory()
+            }
+        }
+    }
+
+    private fun goActPrice() {
+        val intent = Intent(this, RatingClientAct::class.java)
+        intent.putExtra("getPrice", totalPriceTrip)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+    }
+
+    private fun createHistory() {
+
+        val uniqueIdHisTrip = UUID.randomUUID().toString()
+
+        val objHistory = HistoryTripModel(
+            uniqueIdHisTrip,
+            booking?.idClient,
+            authProvider.getIdFrb(), // id driver
+            booking?.origin,
+            booking?.destination,
+            booking?.originLat,
+            booking?.originLng,
+            booking?.destinationLat,
+            booking?.destinationLng,
+            minutes.toDouble(),
+            km,
+            totalPriceTrip,
+            null,
+            null,
+            Date().time
+        )
+
+        historyProvider.createHistTrip(uniqueIdHisTrip, objHistory).addOnCompleteListener { result ->
+            if (result.isSuccessful) {
+                bookProvider
+                    .updateStatus(booking?.idClient?: "", "finished").addOnCompleteListener { result ->
+                    if (result.isSuccessful) {
+                        goActPrice()
+                        ReutiliceCode.msgToast(this, "Viaje finalizado!", true)
+                    }
+                }
+            }
+        }
+    }
+
     override fun onPause() {
         super.onPause()
         ewlLocation.endUpdates()
@@ -420,6 +547,7 @@ class TripAcceptAct :  AppCompatActivity(),
         super.onDestroy()
         ewlLocation.endUpdates()
         listenBook?.remove()
+        runnable?.let { handler.removeCallbacks(it) }
         //geoProvider.removeLocationOnly(authProvider.getIdFrb())
     }
 

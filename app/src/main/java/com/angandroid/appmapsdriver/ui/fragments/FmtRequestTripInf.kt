@@ -7,16 +7,15 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.content.ContextCompat
 import com.angandroid.appmapsdriver.R
 import com.angandroid.appmapsdriver.databinding.FmtRequestTripInfBinding
 import com.angandroid.appmapsdriver.models.Booking
-import com.angandroid.appmapsdriver.ui.MapsDriver
-import com.angandroid.appmapsdriver.ui.TripAcceptAct
-import com.angandroid.appmapsdriver.utils_code.BookingProvider
-import com.angandroid.appmapsdriver.utils_code.FrbAuthProviders
-import com.angandroid.appmapsdriver.utils_code.GeoProvider
-import com.angandroid.appmapsdriver.utils_code.ReutiliceCode
+import com.angandroid.appmapsdriver.ui.activities.MapsDriver
+import com.angandroid.appmapsdriver.ui.activities.TripAcceptAct
+import com.angandroid.appmapsdriver.utils_provider.BookingProvider
+import com.angandroid.appmapsdriver.utils_provider.FrbAuthProviders
+import com.angandroid.appmapsdriver.utils_provider.GeoProvider
+import com.angandroid.appmapsdriver.utils_codes.ReutiliceCode
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
 class FmtRequestTripInf: BottomSheetDialogFragment(), View.OnClickListener {

@@ -1,4 +1,4 @@
-package com.angandroid.appmapsdriver.utils_code
+package com.angandroid.appmapsdriver.utils_provider
 
 import android.util.Log
 import com.google.android.gms.maps.model.LatLng
@@ -12,10 +12,13 @@ class GeoProvider {
 
     // Delete collections in firebase
     val delCollection = FirebaseFirestore.getInstance().collection("Locations")
+    val delCollecWorking = FirebaseFirestore.getInstance().collection("LocationsWorking")
+
+
     val delGeoFirestore = GeoFirestore(delCollection)
 
     val geoFirestore = GeoFirestore(FirebaseFirestore.getInstance().collection("Locations"))
-    val geoFaiCollectionWorking = GeoFirestore(FirebaseFirestore.getInstance().collection("LocationsWorking"))
+    val geoFaiCollectionWorking = GeoFirestore(delCollecWorking)
 
     fun saveLocation(idDriver: String, position: LatLng) {
         geoFirestore.setLocation(idDriver, GeoPoint(position.latitude, position.longitude))
@@ -31,6 +34,10 @@ class GeoProvider {
 
     fun delCollLocationAllTree(idDriver: String) {
         delCollection.document(idDriver).delete()
+    }
+
+    fun delCollWorking(idDriver: String) {
+        delCollecWorking.document(idDriver).delete()
     }
 
     fun getLocIsConnected(idDriver: String): Task<DocumentSnapshot> {

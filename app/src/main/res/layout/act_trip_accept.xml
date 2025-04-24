@@ -5,17 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.TripAcceptAct">
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent"
-        android:text="Viaje aceptado"
-        android:textSize="20sp"
-        android:textColor="@color/black"
-        android:gravity="center"
-        android:layout_marginTop="20dp"/>
+    tools:context=".ui.activities.TripAcceptAct">
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fmt_cont_trip_accept"
@@ -27,6 +17,71 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tv_head"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        android:text="Viaje aceptado"
+        android:textSize="20sp"
+        android:textColor="@color/black"
+        android:gravity="center"
+        android:layout_marginTop="20dp"/>
+
+    <TextView
+        android:id="@+id/tv_head_time"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/tv_head"
+        app:layout_constraintStart_toStartOf="parent"
+        android:text="Tiempo transcurrido: "
+        android:textSize="15sp"
+        android:textColor="@color/black"
+        android:gravity="start"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginTop="20dp"/>
+
+    <TextView
+        android:id="@+id/tv_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_marginTop="20dp"
+        android:hint="0"
+        android:textColor="@color/black"
+        android:textSize="15sp"
+        android:layout_marginStart="10dp"
+        app:layout_constraintStart_toEndOf="@+id/tv_head_time"
+        app:layout_constraintTop_toBottomOf="@+id/tv_head" />
+
+    <TextView
+        android:id="@+id/tv_head_distance"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/tv_head_time"
+        app:layout_constraintStart_toStartOf="parent"
+        android:text="Distancia total: "
+        android:textSize="15sp"
+        android:textColor="@color/black"
+        android:gravity="start"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginTop="10dp"/>
+
+    <TextView
+        android:id="@+id/tv_distance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_marginTop="10dp"
+        android:hint="0"
+        android:textColor="@color/black"
+        android:textSize="15sp"
+        android:layout_marginStart="10dp"
+        app:layout_constraintStart_toEndOf="@+id/tv_head_time"
+        app:layout_constraintTop_toBottomOf="@+id/tv_head_time" />
 
     <LinearLayout
         android:id="@+id/content_btn"

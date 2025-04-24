@@ -2,29 +2,45 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_uber_car"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/ic_uber_car"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppMapsDriver"
         tools:targetApi="31">
         <activity
-            android:name=".ui.TripAcceptAct"
+            android:name=".ui.activities.ContinerMenuFmts"
             android:exported="false" />
         <activity
-            android:name=".ui.MapsDriver"
+            android:name=".ui.activities.RatingClientAct"
             android:exported="false" />
         <activity
-            android:name=".ui.MainActivity"
+            android:name=".ui.activities.TripAcceptAct"
+            android:exported="false" />
+        <activity
+            android:name=".ui.activities.MapsDriver"
+            android:exported="false" />
+        <activity
+            android:name=".ui.activities.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -33,7 +49,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.RegistAct"
+            android:name=".ui.activities.RegistAct"
             android:exported="false" />
 
         <meta-data

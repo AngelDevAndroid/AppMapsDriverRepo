@@ -1,6 +1,7 @@
-package com.angandroid.appmapsdriver.ui
+package com.angandroid.appmapsdriver.ui.activities
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Canvas
 import android.graphics.drawable.Drawable
@@ -9,6 +10,9 @@ import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.util.Log
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -33,19 +37,28 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import androidx.core.graphics.createBitmap
+import androidx.core.view.MenuProvider
+import androidx.lifecycle.Lifecycle
 import com.angandroid.appmapsdriver.models.Booking
 import com.angandroid.appmapsdriver.ui.fragments.FmtRequestTripInf
-import com.angandroid.appmapsdriver.utils_code.BookingProvider
-import com.angandroid.appmapsdriver.utils_code.FrbAuthProviders
-import com.angandroid.appmapsdriver.utils_code.GeoProvider
+import com.angandroid.appmapsdriver.ui.fragments.MenuMapMainFmt
+import com.angandroid.appmapsdriver.utils_provider.BookingProvider
+import com.angandroid.appmapsdriver.utils_provider.FrbAuthProviders
+import com.angandroid.appmapsdriver.utils_provider.GeoProvider
 import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.ListenerRegistration
 
-class MapsDriver : AppCompatActivity(), OnMapReadyCallback, Listener, View.OnClickListener {
+class MapsDriver : AppCompatActivity(),
+    OnMapReadyCallback,
+    Listener,
+    View.OnClickListener {
 
     // View
     private lateinit var bindMapsDriver: ActMapsDriverBinding
     private val modalBooking = FmtRequestTripInf()
+    private val modalMenu = MenuMapMainFmt()
+
+    lateinit var context: Context
 
     // Objects
     private var gMap: GoogleMap? = null
@@ -69,6 +82,7 @@ class MapsDriver : AppCompatActivity(), OnMapReadyCallback, Listener, View.OnCli
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        context = this
         FirebaseApp.initializeApp(this)
 
         enableEdgeToEdge()
@@ -104,6 +118,9 @@ class MapsDriver : AppCompatActivity(), OnMapReadyCallback, Listener, View.OnCli
     private fun initObjects() {
         bindMapsDriver.btnConnLoc.setOnClickListener(this)
         bindMapsDriver.btnDisconnLoc.setOnClickListener(this)
+        setSupportActionBar(bindMapsDriver.tbMap)
+        bindMapsDriver.tbMap.setTitle("")
+        setMenuTb()
     }
 
     override fun onClick(v: View?) {
@@ -187,7 +204,7 @@ class MapsDriver : AppCompatActivity(), OnMapReadyCallback, Listener, View.OnCli
                     .position(setCoordLocation!!)
                     .anchor(0.5f, 0.5f)
                     .flat(true)
-                    .icon(markerIcon)
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_uber_car))
             )
         }
     }
@@ -229,7 +246,7 @@ class MapsDriver : AppCompatActivity(), OnMapReadyCallback, Listener, View.OnCli
     }
 
     private fun disconnectDriver() {
-        ewlLocation?.endUpdates()
+        ewlLocation.endUpdates()
         if (setCoordLocation != null) {
             //geoProvider.removeLocationOnly(authProvider.getIdFrb())
             geoProvider.delCollLocationAllTree(authProvider.getIdFrb())
@@ -239,8 +256,8 @@ class MapsDriver : AppCompatActivity(), OnMapReadyCallback, Listener, View.OnCli
 
     // Connect loc current handly
     private fun connectDriver() {
-        ewlLocation?.endUpdates()
-        ewlLocation?.startLocation()
+        ewlLocation.endUpdates()
+        ewlLocation.startLocation()
         //showBtnDisconnect()
     }
 
@@ -311,5 +328,23 @@ class MapsDriver : AppCompatActivity(), OnMapReadyCallback, Listener, View.OnCli
         ewlLocation?.endUpdates()
         listenBook?.remove()
         //geoProvider.removeLocationOnly(authProvider.getIdFrb())
+    }
+
+    private fun setMenuTb() {
+        addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                menuInflater.inflate(R.menu.toolbar_menu, menu)
+            }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                return when (menuItem.itemId) {
+                    R.id.action_menu -> {
+                        modalMenu.show(supportFragmentManager, MenuMapMainFmt.TAG)
+                        true
+                    }
+                    else -> false
+                }
+            }
+        }, this, Lifecycle.State.RESUMED)
     }
 }

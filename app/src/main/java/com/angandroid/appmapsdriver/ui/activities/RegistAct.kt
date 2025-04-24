@@ -1,4 +1,4 @@
-package com.angandroid.appmapsdriver.ui
+package com.angandroid.appmapsdriver.ui.activities
 
 import android.content.Intent
 import android.os.Bundle
@@ -10,11 +10,10 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.angandroid.appmapsdriver.R
 import com.angandroid.appmapsdriver.databinding.ActRegistBinding
-import com.angandroid.appmapsdriver.models.ClientModel
 import com.angandroid.appmapsdriver.models.DriverModel
-import com.angandroid.appmapsdriver.utils_code.DriverProvider
-import com.angandroid.appmapsdriver.utils_code.FrbAuthProviders
-import com.angandroid.appmapsdriver.utils_code.ReutiliceCode
+import com.angandroid.appmapsdriver.utils_provider.DriverProvider
+import com.angandroid.appmapsdriver.utils_provider.FrbAuthProviders
+import com.angandroid.appmapsdriver.utils_codes.ReutiliceCode
 
 class RegistAct() : AppCompatActivity(), View.OnClickListener {
 

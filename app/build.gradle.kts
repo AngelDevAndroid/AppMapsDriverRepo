@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.google.gms.google.services)
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -50,6 +51,8 @@ dependencies {
     //implementation (platform(libs.firebase.bom.v33100))
     implementation (platform(libs.firebase.bom))
     implementation (libs.firebase.firestore.ktx)
+    implementation (libs.firebase.storage)
+
 
     // Maps
     implementation (libs.maps.ktx)
@@ -65,6 +68,12 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    // Image picker
+    implementation(libs.imagepicker)
+
+    // Glide img
+    implementation (libs.glide)
 
     // AIzaSyAokw_qBC9AB5ZEQl5JM7f3Q-vaGsyL_wE
 }
