@@ -31,7 +31,7 @@ class HistoryProvider {
 
     // Consulta compuesta , requiere collection indexed
     fun getLastHistory(): Query {
-        return db.whereEqualTo("idClient", authProvider.getIdFrb())
+        return db.whereEqualTo("idDriver", authProvider.getIdFrb())
             .orderBy("timeStamp", Query.Direction.DESCENDING)
             .limit(1)
     }
@@ -49,7 +49,7 @@ class HistoryProvider {
 
     // Get doc driver
     fun getHistoriesDriver(): Query {
-        return db.whereEqualTo("idClient", authProvider.getIdFrb())
+        return db.whereEqualTo("idDriver", authProvider.getIdFrb())
             .orderBy("timeStamp", Query.Direction.DESCENDING)
     }
 

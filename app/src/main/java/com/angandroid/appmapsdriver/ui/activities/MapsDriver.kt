@@ -272,7 +272,6 @@ class MapsDriver : AppCompatActivity(),
 
             if (snapsh != null) {
                 if (snapsh.documents.size > 0) {
-
                     val booking = snapsh.documents[0].toObject(Booking::class.java)
                     if (booking?.status.equals("create")){
                         showModalBooking(booking)
@@ -296,7 +295,7 @@ class MapsDriver : AppCompatActivity(),
 
     // Timer to hide bsd
     private fun counterModalDialog() {
-        timer = object : CountDownTimer(20000, 1000) {
+        timer = object : CountDownTimer(20000,1000) {
             override fun onTick(counter: Long) {
                 Log.d("TAG_COUNTER", "$counter")
             }

@@ -21,6 +21,7 @@ class BookingProvider {
 
     fun getBooking(): Query {
         return db.whereEqualTo("idDriver", authProvider.getIdFrb())
+            .orderBy("timeStamp", Query.Direction.DESCENDING).limit(1)
     }
 
     // Update status trip driver booking
@@ -29,6 +30,4 @@ class BookingProvider {
             Log.d("LG_FIRESTORE", "ERROR -> ${failure.message}")
         }
     }
-
-
 }

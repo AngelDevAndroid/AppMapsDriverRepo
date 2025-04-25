@@ -1,11 +1,15 @@
 package com.angandroid.appmapsdriver.ui.activities
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.angandroid.appmapsdriver.R
@@ -14,12 +18,18 @@ import com.angandroid.appmapsdriver.models.DriverModel
 import com.angandroid.appmapsdriver.utils_provider.DriverProvider
 import com.angandroid.appmapsdriver.utils_provider.FrbAuthProviders
 import com.angandroid.appmapsdriver.utils_codes.ReutiliceCode
+import com.github.dhaval2404.imagepicker.ImagePicker
+import java.io.File
 
 class RegistAct() : AppCompatActivity(), View.OnClickListener {
 
+    // View
     private lateinit var bindRegister: ActRegistBinding
+
+    // Objects
     private val authProvider = FrbAuthProviders()
     private val driverProvider = DriverProvider()
+    private var imageFile: File? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,6 +52,7 @@ class RegistAct() : AppCompatActivity(), View.OnClickListener {
         bindRegister.etEmailReg.setOnClickListener(this)
         bindRegister.etPasswReg.setOnClickListener(this)
 
+        bindRegister.ivCamReg.setOnClickListener(this)
         bindRegister.btnSaveReg.setOnClickListener(this)
         bindRegister.btnLoginReg.setOnClickListener(this)
     }
@@ -49,16 +60,87 @@ class RegistAct() : AppCompatActivity(), View.OnClickListener {
     override fun onClick(v: View?) {
 
         when(v?.id) {
+            R.id.iv_cam_reg -> {
+                selectImage()
+            }
             R.id.btn_save_reg -> {
-                checkCredentialsLogin()
+                registerNewDriver()
             }
             R.id.btn_login_reg -> {
-                navIntent(RegistAct::class.java)
+                navIntent(MainActivity::class.java)
             }
         }
     }
 
-    private fun checkCredentialsLogin() {
+    private fun selectImage() {
+        ImagePicker.with(this)
+            .crop()	    			//Crop image(Optional), Check Customization for more option
+            .compress(1024)			//Final image size will be less than 1 MB(Optional)
+            .maxResultSize(1080, 1080)	//Final image resolution will be less than 1080 x 1080(Optional)
+            .createIntent { intent ->
+                startImageForResult.launch(intent)
+            }
+        //.start()
+    }
+
+    private val startImageForResult =
+        registerForActivityResult(
+            ActivityResultContracts
+            .StartActivityForResult()) { result: ActivityResult ->
+
+            val resultCode = result.resultCode
+            val data = result.data
+
+            if (resultCode == Activity.RESULT_OK) {
+                val fileUri = data?.data!!
+
+                imageFile = File(fileUri.path?: "")
+                bindRegister.ivCamReg.setImageURI(fileUri)
+
+            } else if (resultCode == ImagePicker.RESULT_ERROR) {
+
+                ReutiliceCode.msgToast(this, ImagePicker.getError(data), true)
+
+            } else {
+                ReutiliceCode.msgToast(this, "Tarea cancelada!", true)
+
+            }
+        }
+
+    // Update info driver
+    private fun registerNewDriver() {
+
+        var urlImageFile: String? = null
+        var obDriver: DriverModel? = null
+
+        if (imageFile?.exists() == true) {
+            // Upload image
+            driverProvider
+                .uploadFileStorage(authProvider.getIdFrb(),imageFile?: File(""))
+                .addOnSuccessListener { tSnapshot ->
+                    if (tSnapshot.task.isSuccessful) {
+                        Log.d("LG_STORAGE", "img uploaded")
+
+                        // Get url image
+                        driverProvider.getImageUrlStorage().addOnSuccessListener { getUrl ->
+
+                            val urlImage = getUrl.toString()
+                            urlImageFile = urlImage
+                            checkDataRegister(urlImage)
+                            Log.d("LG_STORAGE", "No se pudo obtener la uri")
+                        }
+                    }else{
+                        Log.d("LG_STORAGE", "img not uploaded")
+                    }
+                }
+        }else{
+            checkDataRegister("")
+            Log.d("LG_STORAGE", "img not uploaded")
+
+        }
+    }
+
+    private fun checkDataRegister(imgUrl: String) {
 
         val etNameReg = bindRegister.etNameReg.text.toString()
         val etNumberReg = bindRegister.etNumReg.text.toString()
@@ -71,9 +153,9 @@ class RegistAct() : AppCompatActivity(), View.OnClickListener {
             authProvider.registerUser(etEmailReg, etPasswReg).addOnCompleteListener { it ->
                 if (it.isSuccessful) {
                     ReutiliceCode.msgToast(this, "Credenciales guardadas.", true)
+
                     val nDriver = DriverModel(
-                        authProvider.getIdFrb(),
-                        etNameReg, etNumberReg, etEmailReg, etPasswReg
+                        authProvider.getIdFrb(), etNameReg, imgUrl, etNumberReg, etEmailReg, etPasswReg
                     )
 
                     driverProvider.createUser(nDriver).addOnCompleteListener { result ->
@@ -83,13 +165,11 @@ class RegistAct() : AppCompatActivity(), View.OnClickListener {
                             ReutiliceCode.msgToast(this, "Usuario no completado... ${result.result.toString()}", true)
                         }
                     }
-                    //ReutiliceCode.msgToast(this, "Usuario registrado", true)
                 }else{
                     ReutiliceCode.msgToast(this, "Credenciales no guardadas.", true)
                     Log.d("LG_REG", "${it.result}")
                 }
             }
-            //navIntent(RegistAct::class.java)
         }
     }
 

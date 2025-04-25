@@ -41,18 +41,19 @@
         app:layout_constraintTop_toTopOf="@+id/view_rounded">
 
         <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="100dp"
+            android:id="@+id/iv_cam_reg"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
             android:layout_gravity="center"
             android:layout_marginTop="0dp"
-            android:src="@drawable/ic_login" />
+            android:src="@drawable/ic_cam_reg" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:gravity="center"
-            android:text="Registro"
+            android:text="Registrar conductor"
             android:textColor="@color/white"
             android:textSize="20sp" />
 
