@@ -15,7 +15,7 @@ import com.angandroid.appmapsdriver.databinding.ShowProfileDriverFmtBinding
 import com.angandroid.appmapsdriver.models.DriverModel
 import com.angandroid.appmapsdriver.utils_provider.DriverProvider
 import com.angandroid.appmapsdriver.utils_provider.FrbAuthProviders
-import com.angandroid.appmapsdriver.utils_codes.ReutiliceCode
+import com.angandroid.appmapsdriver.utils_codes.ReuseCode
 import com.bumptech.glide.Glide
 import com.github.dhaval2404.imagepicker.ImagePicker
 import java.io.File
@@ -176,9 +176,9 @@ class ShowProfileDriverFmt : Fragment(), View.OnClickListener {
     private fun updateDataDriver(obDriver: DriverModel) {
         driverProvider.updateInfoDriver(obDriver?: DriverModel()).addOnCompleteListener { update ->
             if (update.isSuccessful) {
-                ReutiliceCode.msgToast(requireActivity(), "Datos actualizados.", true)
+                ReuseCode.msgToast(requireActivity(), "Datos actualizados.", true)
             }else{
-                ReutiliceCode.msgToast(requireActivity(), "Error al actualizar.", true)
+                ReuseCode.msgToast(requireActivity(), "Error al actualizar.", true)
             }
         }
     }
@@ -209,10 +209,10 @@ class ShowProfileDriverFmt : Fragment(), View.OnClickListener {
 
             } else if (resultCode == ImagePicker.RESULT_ERROR) {
 
-                ReutiliceCode.msgToast(requireContext(), ImagePicker.getError(data), true)
+                ReuseCode.msgToast(requireContext(), ImagePicker.getError(data), true)
 
             } else {
-                ReutiliceCode.msgToast(requireContext(), "Tarea cancelada!", true)
+                ReuseCode.msgToast(requireContext(), "Tarea cancelada!", true)
 
             }
         }

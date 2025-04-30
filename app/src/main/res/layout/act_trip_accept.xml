@@ -18,70 +18,76 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/tv_head"
+    <View
+        android:id="@+id/view_rounded"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:alpha="0.7"
+        android:background="@drawable/rounded_layout"
+        app:layout_constraintBottom_toBottomOf="@+id/tb_map"
+        app:layout_constraintEnd_toEndOf="@+id/tb_map"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/fmt_cont_trip_accept" />
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/tb_map"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@android:color/transparent"
         app:layout_constraintTop_toTopOf="parent"
-        android:text="Viaje aceptado"
-        android:textSize="20sp"
-        android:textColor="@color/black"
-        android:gravity="center"
-        android:layout_marginTop="20dp"/>
+        android:title=""
+        android:theme="@style/ToolbarTitleText" />
 
     <TextView
         android:id="@+id/tv_head_time"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/tv_head"
-        app:layout_constraintStart_toStartOf="parent"
-        android:text="Tiempo transcurrido: "
-        android:textSize="15sp"
-        android:textColor="@color/black"
-        android:gravity="start"
+        android:layout_marginTop="10dp"
         android:layout_marginStart="20dp"
-        android:layout_marginEnd="20dp"
-        android:layout_marginTop="20dp"/>
+        android:gravity="start"
+        android:text="Tiempo transcurrido: "
+        android:textColor="@color/black"
+        android:textSize="15sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/fmt_cont_trip_accept" />
 
     <TextView
         android:id="@+id/tv_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
         android:gravity="center"
-        android:layout_marginTop="20dp"
         android:hint="0"
         android:textColor="@color/black"
         android:textSize="15sp"
-        android:layout_marginStart="10dp"
         app:layout_constraintStart_toEndOf="@+id/tv_head_time"
-        app:layout_constraintTop_toBottomOf="@+id/tv_head" />
+        app:layout_constraintTop_toTopOf="@+id/tv_head_time" />
 
     <TextView
         android:id="@+id/tv_head_distance"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/tv_head_time"
-        app:layout_constraintStart_toStartOf="parent"
-        android:text="Distancia total: "
-        android:textSize="15sp"
-        android:textColor="@color/black"
-        android:gravity="start"
         android:layout_marginStart="20dp"
-        android:layout_marginEnd="20dp"
-        android:layout_marginTop="10dp"/>
+        android:layout_marginTop="5dp"
+        android:gravity="start"
+        android:text="Distancia total: "
+        android:textColor="@color/black"
+        android:textSize="15sp"
+        app:layout_constraintBottom_toBottomOf="@+id/view_rounded"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_head_time" />
 
     <TextView
         android:id="@+id/tv_distance"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
         android:gravity="center"
-        android:layout_marginTop="10dp"
         android:hint="0"
         android:textColor="@color/black"
         android:textSize="15sp"
-        android:layout_marginStart="10dp"
         app:layout_constraintStart_toEndOf="@+id/tv_head_time"
-        app:layout_constraintTop_toBottomOf="@+id/tv_head_time" />
+        app:layout_constraintTop_toTopOf="@+id/tv_head_distance" />
 
     <LinearLayout
         android:id="@+id/content_btn"

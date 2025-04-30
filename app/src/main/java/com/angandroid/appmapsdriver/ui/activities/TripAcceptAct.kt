@@ -5,6 +5,10 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Canvas
 import android.graphics.drawable.Drawable
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
@@ -12,6 +16,9 @@ import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -19,19 +26,22 @@ import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
+import androidx.core.view.MenuProvider
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.Lifecycle
 import com.angandroid.appmapsdriver.R
 import com.angandroid.appmapsdriver.databinding.ActTripAcceptBinding
 import com.angandroid.appmapsdriver.models.Booking
 import com.angandroid.appmapsdriver.models.HistoryTripModel
 import com.angandroid.appmapsdriver.models.Prices
+import com.angandroid.appmapsdriver.ui.fragments.MenuTripAcceptFmt
 import com.angandroid.appmapsdriver.utils_provider.BookingProvider
 import com.angandroid.appmapsdriver.utils_provider.ConfigProvider
 import com.angandroid.appmapsdriver.utils_provider.FrbAuthProviders
 import com.angandroid.appmapsdriver.utils_provider.GeoProvider
 import com.angandroid.appmapsdriver.utils_provider.HistoryProvider
-import com.angandroid.appmapsdriver.utils_codes.ReutiliceCode
+import com.angandroid.appmapsdriver.utils_codes.ReuseCode
 import com.example.easywaylocation.EasyWayLocation
 import com.example.easywaylocation.Listener
 import com.example.easywaylocation.draw_path.DirectionUtil
@@ -53,15 +63,19 @@ import com.google.firebase.firestore.ListenerRegistration
 import java.text.DecimalFormat
 import java.util.Date
 import java.util.UUID
+import kotlin.math.abs
 
 class TripAcceptAct :  AppCompatActivity(),
                        OnMapReadyCallback,
                        Listener,
                        View.OnClickListener,
-                       DirectionUtil.DirectionCallBack {
+                       DirectionUtil.DirectionCallBack,
+                       SensorEventListener{
 
     // View
     private lateinit var bindMapsAccept: ActTripAcceptBinding
+    private val modalMenu = MenuTripAcceptFmt()
+
     //private val modalBooking = FmtRequestTripInf()
 
     // Objects
@@ -98,7 +112,14 @@ class TripAcceptAct :  AppCompatActivity(),
     var isCloseToOrigin = false
     var clearRoute = false
 
-    val ifIsNull = LatLng(0.0, 0.0)
+    // SENSOR CAMERA
+    private var angle = 0
+    private var rotationMatrix = FloatArray(16)
+    private var sensorManager: SensorManager? = null
+
+    private var vectorSensor: Sensor? = null
+    private var declination = 0.0f
+    private var isFirstTimeOnResume = false
 
     // Temporizador trip----->
     private var counter = 0
@@ -106,7 +127,7 @@ class TripAcceptAct :  AppCompatActivity(),
 
     val handler = Handler(Looper.getMainLooper())
     private var runnable: Runnable? = null
-
+    val ifIsNull = LatLng(0.0, 0.0)
     // Distance trip----->
     private var meters = 0.0
     private var km = 0.0
@@ -159,7 +180,31 @@ class TripAcceptAct :  AppCompatActivity(),
 
     override fun onStart() {
         super.onStart()
+        setMenuTb()
         setCounterTime()
+        initSensorMap()
+    }
+
+    private fun setMenuTb() {
+
+        setSupportActionBar(bindMapsAccept.tbMap)
+        supportActionBar?.title = ""
+
+        addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                menuInflater.inflate(R.menu.toolbar_menu, menu)
+            }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                return when (menuItem.itemId) {
+                    R.id.action_menu -> {
+                        modalMenu.show(supportFragmentManager, MenuTripAcceptFmt.TAG)
+                        true
+                    }
+                    else -> false
+                }
+            }
+        }, this, Lifecycle.State.RESUMED)
     }
 
     override fun onClick(v: View?) {
@@ -175,6 +220,9 @@ class TripAcceptAct :  AppCompatActivity(),
 
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     override fun onMapReady(map: GoogleMap) {
+
+        startSensor()
+
         gMap = map
         gMap?.uiSettings?.isZoomControlsEnabled = true
         gMap?.isMyLocationEnabled = false
@@ -327,8 +375,13 @@ class TripAcceptAct :  AppCompatActivity(),
             getBooking()
             //calculateDistance(booking, originClientLatLng)
         }else{
-            ReutiliceCode.msgToast(this, "Ubicaciòn no disponible, revisa GPS!", true)
+            ReuseCode.msgToast(this, "Ubicaciòn no disponible, revisa GPS!", true)
         }
+    }
+
+    private fun initSensorMap() {
+        sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager?
+        vectorSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
     }
 
     private fun addMarkerMyLocDriver() {
@@ -373,11 +426,11 @@ class TripAcceptAct :  AppCompatActivity(),
                     easyDrawRoute(destinClientLatLng?: LatLng(0.0, 0.0))
 
                     runnable?.let { handler.postDelayed(it, 1000) }
-                    ReutiliceCode.msgToast(this, "Iniciando viaje!", true)
+                    ReuseCode.msgToast(this, "Iniciando viaje!", true)
                 }
             }
         }else{
-            ReutiliceCode.msgToast(this, "Debes estar màs cerca a la ubicaciòn del cliente!", true)
+            ReuseCode.msgToast(this, "Debes estar màs cerca a la ubicaciòn del cliente!", true)
         }
     }
 
@@ -407,10 +460,7 @@ class TripAcceptAct :  AppCompatActivity(),
         TODO("Not yet implemented")
     }
 
-    override fun onResume() {
-        super.onResume()
-        ewlLocation.startLocation()
-    }
+
 
     private fun saveLocation() {
         if (myLocCoordinates != null) {
@@ -531,24 +581,23 @@ class TripAcceptAct :  AppCompatActivity(),
                     .updateStatus(booking?.idClient?: "", "finished").addOnCompleteListener { result ->
                     if (result.isSuccessful) {
                         goActPrice()
-                        ReutiliceCode.msgToast(this, "Viaje finalizado!", true)
+                        ReuseCode.msgToast(this, "Viaje finalizado!", true)
                     }
                 }
             }
         }
     }
 
-    override fun onPause() {
-        super.onPause()
-        ewlLocation.endUpdates()
-    }
+    private fun updateCamera(bearing: Float) {
+        val oldPos = gMap?.cameraPosition
+        val currPos = CameraPosition.builder(oldPos!!)
+            .bearing(bearing)
+            .tilt(50f)
+            .zoom(19f)
+            .build()
 
-    override fun onDestroy() {
-        super.onDestroy()
-        ewlLocation.endUpdates()
-        listenBook?.remove()
-        runnable?.let { handler.removeCallbacks(it) }
-        //geoProvider.removeLocationOnly(authProvider.getIdFrb())
+        gMap?.moveCamera(CameraUpdateFactory.newCameraPosition(currPos))
+        //addDirectionMarker(setCoordLocation?: LatLng(0.0, 0.0), angle)
     }
 
     override fun pathFindFinish(
@@ -556,5 +605,61 @@ class TripAcceptAct :  AppCompatActivity(),
         polyLineDetailsArray: ArrayList<PolyLineDataBean>
     ) {
         directionUtil.drawPath(WAY_POINT_TAG)
+    }
+
+    // Execute when move phone
+    override fun onSensorChanged(event: SensorEvent?) {
+
+        if (event?.sensor?.type == Sensor.TYPE_ROTATION_VECTOR) {
+            SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
+            val orientation = FloatArray(3)
+            SensorManager.getOrientation(rotationMatrix, orientation)
+
+            if (abs(Math.toDegrees(orientation[0].toDouble()) - angle) > 0.8) {
+                val bearing = Math.toDegrees(orientation[0].toDouble()).toFloat() + declination
+                updateCamera(bearing)
+            }
+            angle = Math.toDegrees(orientation[0].toDouble()).toInt()
+        }
+    }
+
+    override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
+
+    }
+
+    private fun startSensor() {
+        if (sensorManager != null) {
+            sensorManager?.registerListener(this, vectorSensor, SensorManager.SENSOR_STATUS_ACCURACY_LOW)
+        }
+    }
+
+    private fun stopSensor() {
+        sensorManager?.unregisterListener(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        ewlLocation.endUpdates()
+        stopSensor()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        ewlLocation.startLocation()
+
+        if (!isFirstTimeOnResume) {
+            isFirstTimeOnResume = true
+        }else{
+            startSensor()
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        ewlLocation.endUpdates()
+        listenBook?.remove()
+        runnable?.let { handler.removeCallbacks(it) }
+        stopSensor()
+        //geoProvider.removeLocationOnly(authProvider.getIdFrb())
     }
 }

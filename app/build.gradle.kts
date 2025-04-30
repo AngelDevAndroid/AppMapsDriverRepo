@@ -75,5 +75,11 @@ dependencies {
     // Glide img
     implementation (libs.glide)
 
+    // FCM
+    implementation(libs.firebase.messaging)
+
+    // DATA store
+    implementation("androidx.datastore:datastore-preferences:1.1.4")
+
     // AIzaSyAokw_qBC9AB5ZEQl5JM7f3Q-vaGsyL_wE
 }

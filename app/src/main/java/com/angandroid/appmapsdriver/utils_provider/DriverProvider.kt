@@ -8,6 +8,7 @@ import com.google.android.gms.tasks.Task
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageTask
 import com.google.firebase.storage.UploadTask
@@ -18,7 +19,7 @@ class DriverProvider {
 
     // Get collection db
     val db = Firebase.firestore.collection("Drivers")
-    var storageRef = FirebaseStorage.getInstance().getReference().child("ImgProfile")
+    var storageRef = FirebaseStorage.getInstance().getReference().child("ImgProfile/")
 
     // Save user driver
     fun createUser(driverModel: DriverModel): Task<Void>{

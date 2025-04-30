@@ -15,7 +15,7 @@ import com.angandroid.appmapsdriver.ui.activities.TripAcceptAct
 import com.angandroid.appmapsdriver.utils_provider.BookingProvider
 import com.angandroid.appmapsdriver.utils_provider.FrbAuthProviders
 import com.angandroid.appmapsdriver.utils_provider.GeoProvider
-import com.angandroid.appmapsdriver.utils_codes.ReutiliceCode
+import com.angandroid.appmapsdriver.utils_codes.ReuseCode
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
 class FmtRequestTripInf: BottomSheetDialogFragment(), View.OnClickListener {
@@ -85,9 +85,9 @@ class FmtRequestTripInf: BottomSheetDialogFragment(), View.OnClickListener {
              if (result.isSuccessful) {
                  checkCancel = true
                  dismiss()
-                 ReutiliceCode.msgToast(requireContext(),"Viaje cancelado",true)
+                 ReuseCode.msgToast(requireContext(),"Viaje cancelado",true)
              }else{
-                 ReutiliceCode.msgToast(requireContext(), "No se pudo cancelar el viaje!", true)
+                 ReuseCode.msgToast(requireContext(), "No se pudo cancelar el viaje!", true)
              }
          }
     }
@@ -101,10 +101,10 @@ class FmtRequestTripInf: BottomSheetDialogFragment(), View.OnClickListener {
                 (activity as? MapsDriver)?.ewlLocation?.endUpdates() // Que ya no actualize la ubicacion
                 geoProvider.removeLocationOnly(authProvider.getIdFrb()) // Para que ya no aparesca el driver en el mapa
                 goToMapTripAccept(TripAcceptAct::class.java)
-                ReutiliceCode.msgToast(requireContext(),"Viaje aceptado",true)
+                ReuseCode.msgToast(requireContext(),"Viaje aceptado",true)
                 dismiss()
             }else{
-                ReutiliceCode.msgToast(requireContext(), "No se pudo aceptar el viaje!", true)
+                ReuseCode.msgToast(requireContext(), "No se pudo aceptar el viaje!", true)
             }
         }
     }

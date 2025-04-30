@@ -3,7 +3,7 @@ package com.angandroid.appmapsdriver.utils_codes
 import android.content.Context
 import android.widget.Toast
 
-object ReutiliceCode {
+object ReuseCode {
     // Toast
     fun msgToast(cxt: Context, msg: String, duration: Boolean) {
 
@@ -13,4 +13,6 @@ object ReutiliceCode {
         }
         Toast.makeText(cxt, msg, auxDuration).show()
     }
+
+    var getTokenUtils: String? = null
 }

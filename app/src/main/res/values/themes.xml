@@ -6,4 +6,9 @@
     </style>
 
     <style name="Theme.AppMapsDriver" parent="Base.Theme.AppMapsDriver" />
+
+    <style name="ToolbarTitleText" parent="Widget.AppCompat.Toolbar">
+        <item name="android:textSize">14sp</item> <!-- Cambia el tamaño -->
+        <!--<item name="android:textColor">#FFFFFF</item>  (Opcional) Cambia color -->
+    </style>
 </resources>

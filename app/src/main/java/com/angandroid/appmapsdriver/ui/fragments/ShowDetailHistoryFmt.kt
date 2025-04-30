@@ -9,12 +9,10 @@ import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import com.angandroid.appmapsdriver.R
 import com.angandroid.appmapsdriver.databinding.ShowDetailHistoryFmtBinding
-import com.angandroid.appmapsdriver.databinding.ShowHistoryFmtBinding
 import com.angandroid.appmapsdriver.models.ClientModel
-import com.angandroid.appmapsdriver.models.DriverModel
 import com.angandroid.appmapsdriver.models.HistoryTripModel
 import com.angandroid.appmapsdriver.utils_codes.RelativeTime
-import com.angandroid.appmapsdriver.utils_codes.ReutiliceCode
+import com.angandroid.appmapsdriver.utils_codes.ReuseCode
 import com.angandroid.appmapsdriver.utils_provider.ClientProvider
 import com.angandroid.appmapsdriver.utils_provider.DriverProvider
 import com.angandroid.appmapsdriver.utils_provider.FrbAuthProviders
@@ -67,6 +65,7 @@ class ShowDetailHistoryFmt : Fragment() {
     }
 
     private fun initObjects() {
+
     }
 
     private fun initViews() {
@@ -95,13 +94,11 @@ class ShowDetailHistoryFmt : Fragment() {
                     .error(R.drawable.ic_login)
                     .into(bindDetHist.ivDetHist)
 
-                (activity as AppCompatActivity).title = client?.nameUser
-                        /*StringBuilder()
-                    .append("Cliente - ")
-                    .append(client?.nameUser)*/
+                (activity as AppCompatActivity).title = StringBuilder()
+                                             .append("Cliente: ").append(client?.nameUser)
                 bindDetHist.tvEmail.text = client?.emailUser
             }else{
-                ReutiliceCode.msgToast(requireContext(), "No se encontro el cliente!", true)
+                ReuseCode.msgToast(requireContext(), "No se encontro el cliente!", true)
             }
         }
     }

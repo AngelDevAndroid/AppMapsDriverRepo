@@ -11,7 +11,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.angandroid.appmapsdriver.R
 import com.angandroid.appmapsdriver.databinding.ActivityMainBinding
 import com.angandroid.appmapsdriver.utils_provider.FrbAuthProviders
-import com.angandroid.appmapsdriver.utils_codes.ReutiliceCode
+import com.angandroid.appmapsdriver.utils_codes.ReuseCode
 
 class MainActivity : AppCompatActivity(), View.OnClickListener {
 
@@ -63,11 +63,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             authProvider.loginUser(etNameUser, etPasswUser).addOnCompleteListener { aResult ->
                 if (aResult.isSuccessful) {
                     Log.d("LG_LOGIN", "${aResult.result}")
-                    ReutiliceCode.msgToast(this, "Credenciales correctas. ${aResult.result}", true)
+                    ReuseCode.msgToast(this, "Credenciales correctas. ${aResult.result}", true)
                     navIntent(MapsDriver::class.java)
                 }else{
                     Log.d("LG_LOGIN", "${aResult.result}")
-                    ReutiliceCode.msgToast(this, "Credenciales invalidas. ${aResult.result}", true)
+                    ReuseCode.msgToast(this, "Credenciales invalidas. ${aResult.result}", true)
                     Log.d("LG_REG", "${aResult.result}")
                 }
             }
@@ -82,11 +82,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     // Check edit empty
     private fun checkEditEmpty(name: String, passw: String): Boolean {
         if (name.isEmpty()){
-            ReutiliceCode.msgToast(this, "Ingrese usuario", true)
+            ReuseCode.msgToast(this, "Ingrese usuario", true)
             return false
         }
         if (passw.isEmpty()){
-            ReutiliceCode.msgToast(this, "Ingrese Contraseña", true)
+            ReuseCode.msgToast(this, "Ingrese Contraseña", true)
             return false
         }
         return true

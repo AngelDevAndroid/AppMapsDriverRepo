@@ -8,6 +8,7 @@ data class DriverModel(
     val numUser:     String? = null,
     val emailUser:   String? = null,
     val passwUser:   String? = null,
+    val tokenFcm:    String? = null,
     val plateNumber: String? = null,
     val colorCar:    String? = null,
     val brandCar:    String? = null

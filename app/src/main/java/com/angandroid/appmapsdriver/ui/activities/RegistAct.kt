@@ -9,7 +9,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.angandroid.appmapsdriver.R
@@ -17,7 +16,8 @@ import com.angandroid.appmapsdriver.databinding.ActRegistBinding
 import com.angandroid.appmapsdriver.models.DriverModel
 import com.angandroid.appmapsdriver.utils_provider.DriverProvider
 import com.angandroid.appmapsdriver.utils_provider.FrbAuthProviders
-import com.angandroid.appmapsdriver.utils_codes.ReutiliceCode
+import com.angandroid.appmapsdriver.utils_codes.ReuseCode
+import com.angandroid.appmapsdriver.utils_provider.PushNotifProvider
 import com.github.dhaval2404.imagepicker.ImagePicker
 import java.io.File
 
@@ -29,6 +29,7 @@ class RegistAct() : AppCompatActivity(), View.OnClickListener {
     // Objects
     private val authProvider = FrbAuthProviders()
     private val driverProvider = DriverProvider()
+    private val pushNotifProvider = PushNotifProvider()
     private var imageFile: File? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,6 +45,7 @@ class RegistAct() : AppCompatActivity(), View.OnClickListener {
             insets
         }
         initViewsEvents()
+        pushNotifProvider.getTokenFcm()
     }
 
     private fun initViewsEvents() {
@@ -99,10 +101,10 @@ class RegistAct() : AppCompatActivity(), View.OnClickListener {
 
             } else if (resultCode == ImagePicker.RESULT_ERROR) {
 
-                ReutiliceCode.msgToast(this, ImagePicker.getError(data), true)
+                ReuseCode.msgToast(this, ImagePicker.getError(data), true)
 
             } else {
-                ReutiliceCode.msgToast(this, "Tarea cancelada!", true)
+                ReuseCode.msgToast(this, "Tarea cancelada!", true)
 
             }
         }
@@ -126,7 +128,7 @@ class RegistAct() : AppCompatActivity(), View.OnClickListener {
 
                             val urlImage = getUrl.toString()
                             urlImageFile = urlImage
-                            checkDataRegister(urlImage)
+                            checkDataRegister(urlImageFile?: "")
                             Log.d("LG_STORAGE", "No se pudo obtener la uri")
                         }
                     }else{
@@ -152,21 +154,27 @@ class RegistAct() : AppCompatActivity(), View.OnClickListener {
         if (checkEditEmpty(etNameReg, etNumberReg, etEmailReg, etPasswReg)) {
             authProvider.registerUser(etEmailReg, etPasswReg).addOnCompleteListener { it ->
                 if (it.isSuccessful) {
-                    ReutiliceCode.msgToast(this, "Credenciales guardadas.", true)
+                    ReuseCode.msgToast(this, "Credenciales guardadas.", true)
 
                     val nDriver = DriverModel(
-                        authProvider.getIdFrb(), etNameReg, imgUrl, etNumberReg, etEmailReg, etPasswReg
+                        authProvider.getIdFrb(),
+                        etNameReg,
+                        imgUrl,
+                        etNumberReg,
+                        etEmailReg,
+                        etPasswReg,
+                        ReuseCode.getTokenUtils
                     )
 
                     driverProvider.createUser(nDriver).addOnCompleteListener { result ->
                         if (result.isSuccessful) {
-                            ReutiliceCode.msgToast(this, "Usuario registrado!", true)
+                            ReuseCode.msgToast(this, "Usuario registrado!", true)
                         }else{
-                            ReutiliceCode.msgToast(this, "Usuario no completado... ${result.result.toString()}", true)
+                            ReuseCode.msgToast(this, "Usuario no completado... ${result.result.toString()}", true)
                         }
                     }
                 }else{
-                    ReutiliceCode.msgToast(this, "Credenciales no guardadas.", true)
+                    ReuseCode.msgToast(this, "Credenciales no guardadas.", true)
                     Log.d("LG_REG", "${it.result}")
                 }
             }
@@ -179,20 +187,20 @@ class RegistAct() : AppCompatActivity(), View.OnClickListener {
 
     // Check edit empty
     private fun checkEditEmpty(name: String, num: String, email: String, passw: String): Boolean {
-        if (name.isEmpty()){
-            ReutiliceCode.msgToast(this, "Ingrese usuario", true)
+        if (name.isEmpty()) {
+            ReuseCode.msgToast(this, "Ingrese usuario", true)
             return false
         }
         if (num.isEmpty()){
-            ReutiliceCode.msgToast(this, "Ingrese nùmero", true)
+            ReuseCode.msgToast(this, "Ingrese nùmero", true)
             return false
         }
         if (email.isEmpty()){
-            ReutiliceCode.msgToast(this, "Ingrese email", true)
+            ReuseCode.msgToast(this, "Ingrese email", true)
             return false
         }
         if (passw.isEmpty()){
-            ReutiliceCode.msgToast(this, "Ingrese Contraseña", true)
+            ReuseCode.msgToast(this, "Ingrese Contraseña", true)
             return false
         }
         return true

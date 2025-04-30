@@ -1,6 +1,5 @@
 package com.angandroid.appmapsdriver.ui.fragments
 
-import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
@@ -10,11 +9,9 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.angandroid.appmapsdriver.R
 import com.angandroid.appmapsdriver.databinding.ShowHistoryFmtBinding
-import com.angandroid.appmapsdriver.databinding.ShowProfileDriverFmtBinding
 import com.angandroid.appmapsdriver.models.HistoryTripModel
 import com.angandroid.appmapsdriver.ui.adapters.HistoryTripAdapter
-import com.angandroid.appmapsdriver.utils_codes.ItemOnClickRv
-import com.angandroid.appmapsdriver.utils_codes.ReutiliceCode
+import com.angandroid.appmapsdriver.utils_codes.ReuseCode
 import com.angandroid.appmapsdriver.utils_provider.HistoryProvider
 
 
@@ -73,7 +70,7 @@ class ShowHistoryFmt : Fragment() {
                 }else{
                     setHistoryRecycler(emptyList())
                     Log.d("LG_FRHIST", "history -> ${query.documents.size}")
-                    ReutiliceCode.msgToast(requireContext(), "No se encontro el historial!", true)
+                    ReuseCode.msgToast(requireContext(), "No se encontro el historial!", true)
                 }
             }else{
                 Log.d("LG_FRHIST", "history -> $query")
@@ -91,7 +88,7 @@ class ShowHistoryFmt : Fragment() {
 
         adapter.setOnClickListener(object: HistoryTripAdapter.ItemOnClickRv {
             override fun onClick(position: Int, model: HistoryTripModel) {
-                ReutiliceCode.msgToast(requireContext(), "${model.origin}", true)
+                ReuseCode.msgToast(requireContext(), "${model.origin}", true)
                 sendDataDetFmt(model.id?: "")
             }
         })

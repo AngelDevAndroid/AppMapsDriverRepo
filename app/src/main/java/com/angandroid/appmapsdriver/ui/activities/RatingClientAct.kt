@@ -12,7 +12,7 @@ import com.angandroid.appmapsdriver.R
 import com.angandroid.appmapsdriver.databinding.ActRatingClientBinding
 import com.angandroid.appmapsdriver.models.HistoryTripModel
 import com.angandroid.appmapsdriver.utils_provider.HistoryProvider
-import com.angandroid.appmapsdriver.utils_codes.ReutiliceCode
+import com.angandroid.appmapsdriver.utils_codes.ReuseCode
 import java.lang.StringBuilder
 
 class RatingClientAct : AppCompatActivity(), View.OnClickListener{
@@ -58,7 +58,7 @@ class RatingClientAct : AppCompatActivity(), View.OnClickListener{
                     Log.d("LG_FIRESTORE", "history -> ${history}")
                 }else{
                     Log.d("LG_FIRESTORE", "history -> ${query.documents.size}")
-                    ReutiliceCode.msgToast(this, "No se encontro el historial! ${query.documents.size}", true)
+                    ReuseCode.msgToast(this, "No se encontro el historial! ${query.documents.size}", true)
                 }
             }else{
                 Log.d("LG_FIRESTORE", "history -> $query")
@@ -90,7 +90,7 @@ class RatingClientAct : AppCompatActivity(), View.OnClickListener{
             if (resultUp.isSuccessful) {
                 goToMapDriver()
             }else{
-                ReutiliceCode.msgToast(this, "No se pudo calificar!", true)
+                ReuseCode.msgToast(this, "No se pudo calificar!", true)
             }
         }
     }

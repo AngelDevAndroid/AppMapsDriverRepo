@@ -5,6 +5,11 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Canvas
 import android.graphics.drawable.Drawable
+import android.hardware.GeomagneticField
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
@@ -19,6 +24,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.content.getSystemService
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.angandroid.appmapsdriver.R
@@ -45,13 +51,15 @@ import com.angandroid.appmapsdriver.ui.fragments.MenuMapMainFmt
 import com.angandroid.appmapsdriver.utils_provider.BookingProvider
 import com.angandroid.appmapsdriver.utils_provider.FrbAuthProviders
 import com.angandroid.appmapsdriver.utils_provider.GeoProvider
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.ListenerRegistration
+import kotlin.math.abs
 
 class MapsDriver : AppCompatActivity(),
     OnMapReadyCallback,
     Listener,
-    View.OnClickListener {
+    View.OnClickListener, SensorEventListener {
 
     // View
     private lateinit var bindMapsDriver: ActMapsDriverBinding
@@ -73,11 +81,21 @@ class MapsDriver : AppCompatActivity(),
 
     private lateinit var timer: CountDownTimer
 
+    // SENSOR CAMERA
+    private var angle = 0
+    private var rotationMatrix = FloatArray(16)
+    private var sensorManager: SensorManager? = null
+
+    private var vectorSensor: Sensor? = null
+    private var declination = 0.0f
+
     // Vars
 
     //private lateinit var currentLocation: Location
     //private lateinit var flProviderLocation: FusedLocationProviderClient
     private val permissionCode = 101
+    private var isFirstTimeOnResume = false
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -113,6 +131,7 @@ class MapsDriver : AppCompatActivity(),
         }
         listenerBooking()
         counterModalDialog()
+        initSensorMap()
     }
 
     private fun initObjects() {
@@ -134,12 +153,13 @@ class MapsDriver : AppCompatActivity(),
         }
     }
 
-
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     override fun onMapReady(map: GoogleMap) {
         gMap = map
         gMap?.uiSettings?.isZoomControlsEnabled = true
         gMap?.isMyLocationEnabled = false
+
+        startSensor()
     }
 
     override fun onRequestPermissionsResult(
@@ -180,14 +200,26 @@ class MapsDriver : AppCompatActivity(),
     }
 
     override fun currentLocation(location: Location) {
-        setCoordLocation =
-            com.google.android.gms.maps.model.LatLng(location.latitude, location.longitude)
+
+        setCoordLocation = LatLng(location.latitude, location.longitude)
+
+        val field = GeomagneticField(
+            location.latitude.toFloat(),
+            location.longitude.toFloat(),
+            location.altitude.toFloat(),
+            System.currentTimeMillis()
+        )
+
+        declination = field.declination
+
         gMap?.moveCamera(
             CameraUpdateFactory
                 .newCameraPosition(CameraPosition.builder().target(setCoordLocation!!).zoom(17f).build()))
 
         addMarker()
+        //addDirectionMarker(setCoordLocation?: LatLng(0.0, 0.0), angle)
         saveLocation()
+
     }
 
     private fun addMarker() {
@@ -222,11 +254,6 @@ class MapsDriver : AppCompatActivity(),
 
     override fun locationCancelled() {
         TODO("Not yet implemented")
-    }
-
-    override fun onResume() {
-        super.onResume()
-        //ewlLocation?.startLocation()
     }
 
     private fun saveLocation() {
@@ -317,18 +344,6 @@ class MapsDriver : AppCompatActivity(),
         bindMapsDriver.btnDisconnLoc.visibility = View.GONE
     }
 
-    override fun onPause() {
-        super.onPause()
-        ewlLocation?.endUpdates()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        ewlLocation?.endUpdates()
-        listenBook?.remove()
-        //geoProvider.removeLocationOnly(authProvider.getIdFrb())
-    }
-
     private fun setMenuTb() {
         addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
@@ -345,5 +360,92 @@ class MapsDriver : AppCompatActivity(),
                 }
             }
         }, this, Lifecycle.State.RESUMED)
+    }
+
+    private fun initSensorMap() {
+        sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager?
+        vectorSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+    }
+
+    private fun updateCamera(bearing: Float) {
+        val oldPos = gMap?.cameraPosition
+        val currPos = CameraPosition.builder(oldPos!!)
+            .bearing(bearing)
+            .tilt(50f)
+            .zoom(19f)
+            .build()
+
+        gMap?.moveCamera(CameraUpdateFactory.newCameraPosition(currPos))
+        //addDirectionMarker(setCoordLocation?: LatLng(0.0, 0.0), angle)
+    }
+
+    private fun addDirectionMarker(latLng: LatLng, angle: Int) {
+        val drawable = ContextCompat.getDrawable(this, R.drawable.ic_uber_car)
+        val markerIcon = getMarkerFromDrawable(drawable!!)
+
+        markerDriver?.remove()
+        markerDriver = gMap?.addMarker(
+            MarkerOptions()
+                .position(latLng)
+                .anchor(0.5f, 0.5f)
+                .rotation(angle.toFloat())
+                .flat(true)
+                .icon(markerIcon)
+        )
+    }
+
+    // Execute when move phone
+    override fun onSensorChanged(event: SensorEvent?) {
+
+        if (event?.sensor?.type == Sensor.TYPE_ROTATION_VECTOR) {
+            SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
+            val orientation = FloatArray(3)
+            SensorManager.getOrientation(rotationMatrix, orientation)
+
+            if (abs(Math.toDegrees(orientation[0].toDouble()) - angle) > 0.8) {
+                val bearing = Math.toDegrees(orientation[0].toDouble()).toFloat() + declination
+                updateCamera(bearing)
+            }
+            angle = Math.toDegrees(orientation[0].toDouble()).toInt()
+        }
+    }
+
+    override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
+
+    }
+
+    private fun startSensor() {
+        if (sensorManager != null) {
+            sensorManager?.registerListener(this, vectorSensor, SensorManager.SENSOR_STATUS_ACCURACY_LOW)
+        }
+    }
+
+    private fun stopSensor() {
+        sensorManager?.unregisterListener(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        ewlLocation.endUpdates()
+        stopSensor()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        ewlLocation.startLocation()
+
+        if (!isFirstTimeOnResume) {
+            isFirstTimeOnResume = true
+        }else{
+            startSensor()
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        ewlLocation.endUpdates()
+        listenBook?.remove()
+        stopSensor()
+        //geoProvider.removeLocationOnly(authProvider.getIdFrb())
     }
 }
